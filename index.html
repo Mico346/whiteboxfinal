@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task Starter Quiz - White Box Version</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: white;
+      color: black;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    .question {
+      margin-bottom: 20px;
+    }
+    button.option {
+      display: block;
+      margin: 5px 0;
+      padding: 6px;
+      border: 1px solid black;
+      background: white;
+      color: black;
+      cursor: pointer;
+    }
+    #result {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    #progress {
+      margin: 10px 0;
+    }
+    #progress-bar-container {
+      width: 100%;
+      background: #ccc;
+      height: 10px;
+      margin-top: 5px;
+    }
+    #progress-bar {
+      height: 10px;
+      background: black;
+      width: 0%;
+      transition: width 0.3s;
+    }
+    #restart {
+      display: none;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Task Starter Quiz</h1>
+  <div id="progress"></div>
+  <div id="progress-bar-container">
+    <div id="progress-bar"></div>
+  </div>
+  <div id="quiz"></div>
+  <div id="result"></div>
+  <button id="restart" onclick="restartQuiz()">Restart Quiz</button>
+
+  <script>
+    const quizData = [
+      { question: "How many tasks are you currently facing?",
+        options: [
+          { text: "Too many, I don't know where to start", tags: ["overwhelmed"] },
+          { text: "Three or four, but I can't decide the order", tags: ["stuck"] },
+          { text: "Just one or two, but I've been putting them off", tags: ["procrastinate"] },
+          { text: "No specific task, but I feel like I should be doing something", tags: ["unclear"] },
+        ],
+      },
+      { question: "What’s your current energy level?",
+        options: [
+          { text: "Full of energy", tags: ["high energy"] },
+          { text: "I’m okay", tags: ["medium"] },
+          { text: "A bit tired", tags: ["low energy"] },
+          { text: "Completely drained or low energy", tags: ["very low energy"] },
+        ],
+      },
+      { question: "What are you most worried about?",
+        options: [
+          { text: "Doing the wrong task and missing something important", tags: ["urgent"] },
+          { text: "Not doing it well enough and getting criticized", tags: ["perfectionism"] },
+          { text: "Being inefficient or wasting too much time", tags: ["procrastinate"] },
+          { text: "Putting it off for so long that it’s too late", tags: ["anxiety"] },
+        ],
+      },
+      { question: "What’s your current work environment like?",
+        options: [
+          { text: "Quiet, good for studying", tags: ["focused"] },
+          { text: "Not bad, a little noisy", tags: ["medium"] },
+          { text: "Distracting and not very stable", tags: ["distracted"] },
+          { text: "Very loud and hard to focus", tags: ["unfocused"] },
+        ],
+      },
+      { question: "How well do you understand your tasks?",
+        options: [
+          { text: "Very clear, I know exactly what to do", tags: ["clear"] },
+          { text: "I have a rough idea, but some parts are unclear", tags: ["medium"] },
+          { text: "Some parts I don’t understand at all", tags: ["unclear"] },
+          { text: "I don’t really know what to do", tags: ["unclear"] },
+        ],
+      },
+      { question: "How long can you stay focused right now?",
+        options: [
+          { text: "Over an hour", tags: ["high energy"] },
+          { text: "Around 30 minutes", tags: ["medium"] },
+          { text: "Not sure", tags: ["unsure"] },
+          { text: "Just a few minutes", tags: ["low energy"] },
+        ],
+      },
+      { question: "What usually helps you regain motivation?",
+        options: [
+          { text: "Finishing something small and easy", tags: ["go simple"] },
+          { text: "Getting the urgent task out of the way", tags: ["go urgent"] },
+          { text: "Writing everything down and organizing it", tags: ["go organize"] },
+          { text: "I honestly don’t know", tags: ["unsure"] },
+        ],
+      },
+      { question: "How strongly are you avoiding your current task?",
+        options: [
+          { text: "Very strongly, I don’t want to touch it", tags: ["resistance"] },
+          { text: "A little, but I can’t say why", tags: ["resistance"] },
+          { text: "Not really, I’m just putting it off", tags: ["procrastinate"] },
+          { text: "I feel nothing in particular, I just haven’t started", tags: ["medium"] },
+        ],
+      },
+    ];
+
+    let currentQuestion = 0;
+    let tagScores = {};
+
+    function showQuestion() {
+      const quiz = document.getElementById("quiz");
+      const progressText = document.getElementById("progress");
+      const progressBar = document.getElementById("progress-bar");
+      quiz.innerHTML = "";
+
+      if (currentQuestion >= quizData.length) {
+        showResult();
+        return;
+      }
+
+      progressText.textContent = `Question ${currentQuestion + 1} of ${quizData.length}`;
+      const progressPercent = ((currentQuestion + 1) / quizData.length) * 100;
+      progressBar.style.width = `${progressPercent}%`;
+
+      const q = quizData[currentQuestion];
+      const qDiv = document.createElement("div");
+      qDiv.className = "question";
+      const qTitle = document.createElement("h3");
+      qTitle.textContent = q.question;
+      qDiv.appendChild(qTitle);
+
+      q.options.forEach((opt) => {
+        const btn = document.createElement("button");
+        btn.className = "option";
+        btn.textContent = opt.text;
+        btn.onclick = () => {
+          opt.tags.forEach((tag) => {
+            tagScores[tag] = (tagScores[tag] || 0) + 1;
+          });
+          currentQuestion++;
+          showQuestion();
+        };
+        qDiv.appendChild(btn);
+      });
+      quiz.appendChild(qDiv);
+    }
+
+    function showResult() {
+      const result = document.getElementById("result");
+      const quiz = document.getElementById("quiz");
+      const progress = document.getElementById("progress");
+      const restart = document.getElementById("restart");
+      quiz.innerHTML = "";
+      progress.textContent = "";
+
+      const tagEntries = Object.entries(tagScores);
+      const scores = tagEntries.reduce(
+        (acc, [tag, val]) => {
+          if (tag.includes("simple") || tag.includes("go simple")) acc.simple += val;
+          if (tag.includes("urgent") || tag.includes("go urgent")) acc.urgent += val;
+          if (tag.includes("organize") || tag.includes("go organize")) acc.organize += val;
+          return acc;
+        },
+        { simple: 0, urgent: 0, organize: 0 }
+      );
+
+      let suggestion = "";
+      if (scores.simple >= scores.urgent && scores.simple >= scores.organize) {
+        suggestion = "Try starting with something really easy. Set a 10-minute timer and just begin.";
+      } else if (scores.urgent >= scores.simple && scores.urgent >= scores.organize) {
+        suggestion = "Pick the most urgent or overdue task. Do just one small part of it to get going.";
+      } else {
+        suggestion = "Take 10 minutes to write down your tasks and sort them by priority. Then choose one.";
+      }
+      result.textContent = suggestion;
+      restart.style.display = "block";
+    }
+
+    function restartQuiz() {
+      currentQuestion = 0;
+      tagScores = {};
+      document.getElementById("result").textContent = "";
+      document.getElementById("restart").style.display = "none";
+      showQuestion();
+    }
+
+    showQuestion();
+  </script>
+</body>
+</html>
